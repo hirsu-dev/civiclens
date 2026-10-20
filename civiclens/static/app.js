@@ -250,14 +250,18 @@ $("#import-form").addEventListener("submit", async (event) => {
   $("#import-error").textContent = "";
   try {
     const file = $("#import-file").files[0];
-    if (!file || file.size > 2 * 1024 * 1024)
+    if (file && file.size > 2 * 1024 * 1024)
       throw new Error("Choose a JSON file smaller than 2 MB.");
+    const raw = file ? await file.text() : $("#import-json").value.trim();
+    if (!raw) throw new Error("Choose a JSON file or paste a bundle below.");
+    if (new TextEncoder().encode(raw).length > 2 * 1024 * 1024)
+      throw new Error("The JSON bundle must be smaller than 2 MB.");
     let bundle;
     try {
-      bundle = JSON.parse(await file.text());
+      bundle = JSON.parse(raw);
     } catch {
       throw new Error(
-        "The file is not valid JSON. Download the example bundle for the expected format.",
+        "The bundle is not valid JSON. Download the example for the expected format.",
       );
     }
     const result = await request("/api/import", {

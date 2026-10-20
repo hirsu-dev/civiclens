@@ -134,8 +134,8 @@
           </button>
         </div>
         <p>
-          Upload a JSON bundle of meetings and agenda items. Every record needs
-          a source URL, source excerpt, and summary method.
+          Upload or paste a JSON bundle of meetings and agenda items. Every
+          record needs a source URL, source excerpt, and summary method.
         </p>
         <a
           class="inline-link"
@@ -144,12 +144,15 @@
           >Download an example bundle ↓</a
         ><label for="import-file"
           >JSON file <span class="muted">(up to 2 MB)</span></label
-        ><input
-          id="import-file"
-          type="file"
-          accept="application/json,.json"
-          required
-        /><label for="write-token"
+        ><input id="import-file" type="file" accept="application/json,.json" />
+        <label for="import-json">Or paste a JSON bundle</label>
+        <textarea
+          id="import-json"
+          rows="6"
+          spellcheck="false"
+          placeholder='{"meetings": [...], "items": [...]}'
+        ></textarea>
+        <label for="write-token"
           >Workspace write token
           <span class="muted">(if configured)</span></label
         ><input id="write-token" type="password" autocomplete="off" />

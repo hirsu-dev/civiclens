@@ -43,7 +43,7 @@ CivicLens ships no real municipal dataset. It does not crawl websites, infer vot
 
 ## Bring your community's records
 
-Select **Import records** and download the example JSON bundle. Replace the fictional values, set the meeting's `is_demo` to `false`, and provide a source excerpt for every item. Upload the resulting JSON file (browser limit: 2 MB).
+Select **Import records** and download the example JSON bundle. Replace the fictional values, set the meeting's `is_demo` to `false`, and provide a source excerpt for every item. Upload the resulting JSON file or paste the JSON directly (browser limit: 2 MB). When a file is selected, it takes precedence over pasted text.
 
 For an agenda CSV, begin with [examples/agenda.csv](examples/agenda.csv). Each row requires `id,title,summary,source_excerpt,topic,status,source_url`; optional columns include `district,reference,summary_method`. One conversion corresponds to one meeting:
 

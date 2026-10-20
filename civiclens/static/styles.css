@@ -7,6 +7,24 @@
   --line: #d9ddd3;
   --orange: #c46d45;
 }
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #d1d8cc;
+  border-radius: 4px;
+  padding: 11px;
+  color: #375c50;
+  background: #fbfaf6;
+  font:
+    11px/1.6 ui-monospace,
+    Consolas,
+    monospace;
+}
+textarea:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 4px;
+}
 * {
   box-sizing: border-box;
 }
