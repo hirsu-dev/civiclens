@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CivicLens · Follow the decisions</title>
+    <meta
+      name="description"
+      content="A source-linked timeline of decisions shaping your neighborhood."
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to public records</a>
+    <header class="site-header">
+      <a class="brand" href="/"
+        ><span class="brand-icon">c<span>↗</span></span
+        >CivicLens<span class="edition">THE PUBLIC RECORD, IN FOCUS</span></a
+      >
+      <nav aria-label="Main navigation">
+        <a class="selected" href="#main">Explore decisions</a
+        ><button id="open-import" class="outline">Import records ↗</button>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">YOUR NEIGHBORHOOD. YOUR PUBLIC RECORD.</p>
+          <h1>Big decisions.<br /><em>A clearer picture.</em></h1>
+          <p class="lede">
+            Follow an idea from proposal to vote.<br />See what changed, who
+            discussed it, and the source behind it.
+          </p>
+        </div>
+        <div class="hero-note">
+          <span class="note-mark">⌁</span>
+          <p>Public information<br />should feel public.</p>
+          <span>READ THE RECORD. FOLLOW THE THREAD.</span>
+        </div>
+      </section>
+      <div id="notice" role="status" aria-live="polite"></div>
+      <section class="explorer">
+        <aside class="filters">
+          <div class="aside-title">
+            NARROW YOUR VIEW
+            <button id="clear" class="text-button">Reset</button>
+          </div>
+          <label for="jurisdiction">Community</label
+          ><select id="jurisdiction">
+            <option value="">All communities</option></select
+          ><label for="topic">Topic</label
+          ><select id="topic">
+            <option value="">All topics</option></select
+          ><label for="status">Decision status</label
+          ><select id="status">
+            <option value="">Any status</option>
+            <option value="proposed">Proposed</option>
+            <option value="tabled">Tabled</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option></select
+          ><label for="district">District</label
+          ><select id="district">
+            <option value="">All districts</option>
+          </select>
+          <div class="saved-heading">
+            <h2>Your watchlist</h2>
+            <button
+              class="text-button"
+              id="open-save"
+              aria-label="Save current search"
+            >
+              + Save
+            </button>
+          </div>
+          <p class="aside-help">
+            Keep a topic in sight. Saved searches show current matching records.
+          </p>
+          <div id="saved-searches"></div>
+          <a class="aside-link" href="/docs">For researchers & developers ↗</a>
+        </aside>
+        <section class="records-panel" aria-label="Public records">
+          <form id="search-form" role="search">
+            <span aria-hidden="true">⌕</span
+            ><label class="sr-only" for="search">Search public records</label
+            ><input
+              id="search"
+              placeholder="Search a proposal, place, or reference…"
+              autocomplete="off"
+            /><button class="search-button">Search</button>
+          </form>
+          <div class="results-heading">
+            <h2 id="results-label">Loading the public record…</h2>
+            <a id="export" href="/api/export.csv">↓ Export CSV</a>
+          </div>
+          <div id="results" aria-live="polite"></div>
+          <div class="pagination">
+            <button id="previous" class="outline" disabled>← Previous</button
+            ><span id="page-label"></span
+            ><button id="next" class="outline" disabled>Next →</button>
+          </div>
+        </section>
+      </section>
+      <footer class="page-footer">
+        <a class="brand footer-brand" href="/">CivicLens</a>
+        <p>
+          Context, with a paper trail.<br />Summaries are navigation aids. The
+          original record is the authority.
+        </p>
+        <span>OPEN SOURCE · COMMUNITY FIRST</span>
+      </footer>
+    </main>
+    <dialog id="detail-dialog" class="detail-dialog">
+      <button
+        class="close-dialog"
+        data-close
+        aria-label="Close decision details"
+      >
+        ×
+      </button>
+      <div id="record-detail"></div>
+    </dialog>
+    <dialog id="import-dialog">
+      <form id="import-form">
+        <div class="dialog-heading">
+          <h2>Add to the public record.</h2>
+          <button
+            type="button"
+            class="close-dialog"
+            data-close
+            aria-label="Close import"
+          >
+            ×
+          </button>
+        </div>
+        <p>
+          Upload a JSON bundle of meetings and agenda items. Every record needs
+          a source URL, source excerpt, and summary method.
+        </p>
+        <a
+          class="inline-link"
+          href="/api/import-template"
+          download="civiclens-template.json"
+          >Download an example bundle ↓</a
+        ><label for="import-file"
+          >JSON file <span class="muted">(up to 2 MB)</span></label
+        ><input
+          id="import-file"
+          type="file"
+          accept="application/json,.json"
+          required
+        /><label for="write-token"
+          >Workspace write token
+          <span class="muted">(if configured)</span></label
+        ><input id="write-token" type="password" autocomplete="off" />
+        <p class="aside-help">
+          Replace the fictional sample details and set is_demo to false when
+          importing actual records.
+        </p>
+        <p id="import-error" class="error" role="alert"></p>
+        <button class="primary" id="import-submit">
+          Validate & import records
+        </button>
+      </form>
+    </dialog>
+    <dialog id="save-dialog">
+      <form id="save-form">
+        <div class="dialog-heading">
+          <h2>Keep this search in sight.</h2>
+          <button
+            type="button"
+            class="close-dialog"
+            data-close
+            aria-label="Close save search"
+          >
+            ×
+          </button>
+        </div>
+        <p>Your current search and filters will be saved to this workspace.</p>
+        <label for="search-name">Search name</label
+        ><input
+          id="search-name"
+          maxlength="80"
+          placeholder="Housing near transit"
+          required
+        />
+        <p id="save-error" class="error" role="alert"></p>
+        <button class="primary" id="save-submit">Save to watchlist</button>
+      </form>
+    </dialog>
+  </body>
+</html>
