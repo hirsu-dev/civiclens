@@ -30,7 +30,11 @@ An item's revision history records changes to that observation, not a new legisl
 
 ## Querying
 
-Queries split search text into case-insensitive terms; every term must appear somewhere in title, summary, source excerpt, topic, or reference. Filters are exact matches. The API supports inclusive date bounds and paginated results. Current implementation loads the joined records and filters in Python, which is simple and testable for small curated collections. Large imports will need indexed full-text search and SQL pagination.
+Queries split search text into case-insensitive literal terms; every term must appear somewhere in title, summary, source excerpt, topic, or reference. Python casefolding is applied at ingestion and query time, preserving Unicode matching. The denormalized text is indexed with an FTS5 case-sensitive trigram tokenizer. Terms of at least three characters narrow candidate row IDs; parameterized `instr` predicates confirm every term literally. Short/NUL-containing terms skip FTS. Quoted FTS terms prevent query-operator injection. Filters and inclusive date bounds run in SQL.
+
+The API counts and pages matching rows in one read transaction, decoding only the returned page. Watchlists use SQL counts rather than loading all records. B-tree indexes cover topic, status, district, meeting/reference and jurisdiction/date lookups. CSV export still materializes all matching records; it is not a streaming large-dataset export.
+
+The first 0.3 startup transaction adds search columns, backfills legacy records, creates triggers and rebuilds the external-content index. Agenda upserts and index triggers share the import transaction. Failed imports cannot expose partial search results. Source JSON and existing revisions are unchanged. Subsequent startups do not rebuild the index. SQLite with FTS5 trigram support is required; migration errors roll back the search-schema transaction. Details and a reproducible synthetic benchmark are in [search.md](search.md).
 
 Watchlists persist a query and compute a current match count. They have no per-user ownership or notification delivery in this version. CSV exports use the same filters and neutralize spreadsheet formula prefixes.
 

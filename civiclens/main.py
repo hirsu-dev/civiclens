@@ -28,7 +28,7 @@ def create_app(db_path=None, demo=None, write_token=None):
             seed(store)
         yield
 
-    app = FastAPI(title="CivicLens", version="0.2.0", lifespan=lifespan)
+    app = FastAPI(title="CivicLens", version="0.3.0", lifespan=lifespan)
     app.state.store = store
 
     def authorize(x_write_token: str = Header(default="")):
@@ -48,7 +48,7 @@ def create_app(db_path=None, demo=None, write_token=None):
 
     @app.get("/api/status")
     def status():
-        return {"ok": True, "version": "0.2.0", "write_token_required": bool(token)}
+        return {"ok": True, "version": "0.3.0", "write_token_required": bool(token)}
 
     @app.get("/api/meetings")
     def meetings():
@@ -81,16 +81,10 @@ def create_app(db_path=None, demo=None, write_token=None):
         offset: int = Query(0, ge=0),
         limit: int = Query(30, ge=1, le=200),
     ):
-        rows = store.query(**criteria)
-        return {
-            "items": rows[offset : offset + limit],
-            "total": len(rows),
-            "offset": offset,
-            "limit": limit,
-        }
+        return store.page(**criteria, offset=offset, limit=limit)
 
     def require_item(identifier):
-        row = next((r for r in store.records() if r["id"] == identifier), None)
+        row = store.get_item(identifier)
         if not row:
             raise HTTPException(404, "Agenda item not found")
         return row
@@ -106,14 +100,7 @@ def create_app(db_path=None, demo=None, write_token=None):
 
     @app.get("/api/facets")
     def facets():
-        rows = store.records()
-        return {
-            "topics": sorted({r["topic"] for r in rows}),
-            "districts": sorted({r["district"] for r in rows}),
-            "jurisdictions": sorted({r["meeting"]["jurisdiction"] for r in rows}),
-            "total": len(rows),
-            "demo_records": sum(r["meeting"]["is_demo"] for r in rows),
-        }
+        return store.facets()
 
     @app.post("/api/import", status_code=201, dependencies=[Depends(authorize)])
     def import_records(bundle: ImportBundle):
@@ -131,9 +118,7 @@ def create_app(db_path=None, demo=None, write_token=None):
         return [
             {
                 **s,
-                "matches": len(
-                    store.query(**{k: v for k, v in s.items() if k not in {"id", "name"}})
-                ),
+                "matches": store.count(**{k: v for k, v in s.items() if k not in {"id", "name"}}),
             }
             for s in store.searches()
         ]

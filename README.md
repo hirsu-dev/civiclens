@@ -10,7 +10,7 @@ A housing proposal can pass through a council introduction, a planning hearing, 
 
 ## What works today
 
-- Search words across titles, summaries, source excerpts, and decision references; combine topic, status, district, and community filters.
+- Search literal words/substrings across titles, summaries, source excerpts, and decision references using a SQLite trigram index; combine topic, status, district, and community filters.
 - Follow a decision across meetings using its reference and jurisdiction.
 - Read source excerpts beside clearly identified human, extractive, or fictional summaries.
 - Import validated JSON bundles atomically. Repeat imports are idempotent; changed agenda items retain earlier revisions.
@@ -21,7 +21,7 @@ Python/FastAPI serves the API, plain JavaScript runs the interface, and SQLite k
 
 ## Quick start
 
-Requires Python 3.11+. From this repository:
+Requires Python 3.11+ and a SQLite build with FTS5 trigram support (SQLite 3.34+; included in the tested Python distributions and Docker image). From this repository:
 
 ```sh
 python -m venv .venv
@@ -62,6 +62,12 @@ An installed `civiclens` command has the same interface. Import accepts `--db pa
 
 Use stable IDs. A repeated item ID updates that observation and creates a revision when its content changes. A new meeting observation needs a new item ID and the **same decision reference** to join the timeline. Namespace IDs by community and meeting to prevent accidental cross-community updates. Timelines match exact references within one jurisdiction and demo/real classification; unrelated decisions are not matched by title similarity.
 
+## Search and upgrades
+
+Search remains literal, case-insensitive substring matching: all whitespace-separated terms must appear. `HO-26-07` finds a decision reference; `hous trans` matches fragments. Quotes, `OR`, and punctuation are ordinary text, not a query language. Terms of three or more characters use a trigram index; short terms use SQL substring checks. Results retain chronological order and stable ID tie-breaking, not relevance ranking.
+
+Version 0.3 automatically adds/backfills search columns and an FTS index without changing source records, revisions, or watchlists. Stop older server processes and back up the database before upgrading; do not run 0.2 against an upgraded database. Use SQLite's online backup API for an active database, or copy the database with all writers stopped. The initial backfill may take time for a large collection. See [search implementation and benchmark](docs/search.md).
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -83,4 +89,4 @@ python -m ruff format --check .
 python -m build
 ```
 
-Tests cover transactional imports, persistence, revisions, reference isolation, search, watchlists, write protection, CSV escaping, and conversion. Read [architecture](docs/architecture.md), [contributing](CONTRIBUTING.md), and [roadmap](docs/roadmap.md). MIT licensed.
+Tests cover transactional imports, persistence, revisions, reference isolation, legacy database migration, indexed search equivalence, pagination, watchlists, write protection, CSV escaping, and conversion. Read [architecture](docs/architecture.md), [contributing](CONTRIBUTING.md), and [roadmap](docs/roadmap.md). MIT licensed.
