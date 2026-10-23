@@ -2,83 +2,64 @@
 
 [![Tests](https://github.com/hrushikbarani-hub/civiclens/actions/workflows/test.yml/badge.svg)](https://github.com/hrushikbarani-hub/civiclens/actions/workflows/test.yml)
 
-**Big decisions. A clearer picture.** A source-linked tracker for the local decisions that often disappear into meeting packets.
+CivicLens helps organize public meeting decisions and connect them to their source records. It keeps a timeline of each decision and shows where summaries came from.
 
-A housing proposal can pass through a council introduction, a planning hearing, and a final vote. CivicLens connects those observations into a chronological path while preserving the source excerpt, summary method, and revision history behind each record.
+![CivicLens explorer](docs/images/explorer.jpg)
 
-![CivicLens explorer with searchable source-linked records](docs/images/explorer.jpg)
+## Features
 
-## What works today
+- Search meeting records and filter by topic, status, district, or community.
+- Follow a decision across meetings using its reference.
+- Read source excerpts and see how each summary was made.
+- Import JSON records and convert agenda CSV files.
+- Save searches and export results as CSV.
 
-- Search literal words/substrings across titles, summaries, source excerpts, and decision references using a SQLite trigram index; combine topic, status, district, and community filters.
-- Follow a decision across meetings using its reference and jurisdiction.
-- Read source excerpts beside clearly identified human, extractive, or fictional summaries.
-- Import validated JSON bundles atomically. Repeat imports are idempotent; changed agenda items retain earlier revisions.
-- Save searches to a watchlist with current match counts, and export filtered results to CSV.
-- Convert a meeting agenda CSV into a validated bundle using the CLI.
+The starter records are fictional examples for “Sample City.” CivicLens does not include real city data, crawl websites, or generate AI summaries. Check imported information against its source.
 
-Python/FastAPI serves the API, plain JavaScript runs the interface, and SQLite keeps the records in your workspace. There are no required hosted services or model keys.
+The app uses Python, FastAPI, and SQLite with a plain JavaScript interface. It can run locally without a hosted service or model key.
 
-## Quick start
+## Run it
 
-Requires Python 3.11+ and a SQLite build with FTS5 trigram support (SQLite 3.34+; included in the tested Python distributions and Docker image). From this repository:
+Requires Python 3.11 or newer and SQLite with FTS5 trigram support. From the project folder:
 
 ```sh
 python -m venv .venv
-# Windows: .venv\Scripts\activate
+# Windows: .venv\\Scripts\\activate
 # macOS/Linux: source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m uvicorn civiclens.main:app --host 127.0.0.1 --port 8002
 ```
 
-Open [localhost:8002](http://localhost:8002). API documentation is at `/docs`. On Windows, `./run.ps1` installs and launches; use `-Python 'C:\path\to\python.exe'` if needed, or `-SetupOnly` to only install.
+Open [http://localhost:8002](http://localhost:8002). API docs are at `/docs`. You can also use `./run.ps1` on Windows or run the app with Docker:
 
-Or run `docker compose up --build`. Compose binds port 8002 on the local computer and uses a named database volume. Docker builds are checked in CI.
+```sh
+docker compose up --build
+```
 
-## Explore the demonstration
+## Import records
 
-The initial six records describe **fictional Sample City decisions**, labeled throughout the UI and linked to reserved `example.invalid` URLs. Search `housing` and open the approved preservation fund to see its three-meeting path. Save that search to a watchlist, then reload.
-
-CivicLens ships no real municipal dataset. It does not crawl websites, infer vote outcomes, or generate AI summaries. Imported summaries and statuses should be checked against their original records. Watchlists are saved queries with live counts; email alerts are a future feature.
-
-## Bring your community's records
-
-Select **Import records** and download the example JSON bundle. Replace the fictional values, set the meeting's `is_demo` to `false`, and provide a source excerpt for every item. Upload the resulting JSON file or paste the JSON directly (browser limit: 2 MB). When a file is selected, it takes precedence over pasted text.
-
-For an agenda CSV, begin with [examples/agenda.csv](examples/agenda.csv). Each row requires `id,title,summary,source_excerpt,topic,status,source_url`; optional columns include `district,reference,summary_method`. One conversion corresponds to one meeting:
+Start with the example files in `examples/`. A CSV agenda can be converted to JSON:
 
 ```sh
 python -m civiclens.cli convert-csv examples/agenda.csv --meeting-id sample-session --date 2026-10-14 --body "City Council" --title "Sample session" --jurisdiction "Sample City" --source-url https://example.invalid/meeting --demo
 ```
 
-This prints validated JSON to stdout. Save it as UTF-8 and then:
+Validate and import the resulting file:
 
 ```sh
 python -m civiclens.cli validate bundle.json
 python -m civiclens.cli import bundle.json
 ```
 
-An installed `civiclens` command has the same interface. Import accepts `--db path/to/file.sqlite3`. Exit codes are 0 success and 2 invalid data/read failure. Standalone validation requires referenced meetings in the same file; database imports can also reference previously imported meetings.
+Use stable IDs and decision references to connect records across meetings. Check the source before importing real information.
 
-Use stable IDs. A repeated item ID updates that observation and creates a revision when its content changes. A new meeting observation needs a new item ID and the **same decision reference** to join the timeline. Namespace IDs by community and meeting to prevent accidental cross-community updates. Timelines match exact references within one jurisdiction and demo/real classification; unrelated decisions are not matched by title similarity.
+## Settings and safety
 
-## Search and upgrades
+Copy `.env.example` to `.env` for Docker Compose. Settings include the database path, demo data, and an optional write token.
 
-Search remains literal, case-insensitive substring matching: all whitespace-separated terms must appear. `HO-26-07` finds a decision reference; `hous trans` matches fragments. Quotes, `OR`, and punctuation are ordinary text, not a query language. Terms of three or more characters use a trigram index; short terms use SQL substring checks. Results retain chronological order and stable ID tie-breaking, not relevance ranking.
+Keep the server on your own computer unless you add HTTPS and access control. This app has one shared workspace, so everyone who can access it can read its records and saved searches.
 
-Version 0.3 automatically adds/backfills search columns and an FTS index without changing source records, revisions, or watchlists. Stop older server processes and back up the database before upgrading; do not run 0.2 against an upgraded database. Use SQLite's online backup API for an active database, or copy the database with all writers stopped. The initial backfill may take time for a large collection. See [search implementation and benchmark](docs/search.md).
-
-## Configuration
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `CIVICLENS_DB` | `data/civiclens.sqlite3` | SQLite file path |
-| `DEMO_DATA` | `1` | Seed fictional records only if the database is empty |
-| `WRITE_TOKEN` | empty | Require `X-Write-Token` for imports and watchlist writes |
-
-Use `.env.example` with Docker Compose or Uvicorn's `--env-file .env`. Disabling demo data only prevents seeding; choose a new database to start without existing samples.
-
-This is a shared local workspace. Before public hosting, set a write token, put access control and HTTPS at a reverse proxy, and configure request/body limits. Everyone with read access can see all imported records and saved searches; there are no private user workspaces. Import only records appropriate for that audience.
+Back up your database before upgrading. See [search notes](docs/search.md) for details about the current search version.
 
 ## Development
 
@@ -89,4 +70,4 @@ python -m ruff format --check .
 python -m build
 ```
 
-Tests cover transactional imports, persistence, revisions, reference isolation, legacy database migration, indexed search equivalence, pagination, watchlists, write protection, CSV escaping, and conversion. Read [architecture](docs/architecture.md), [contributing](CONTRIBUTING.md), and [roadmap](docs/roadmap.md). MIT licensed.
+See [contributing](CONTRIBUTING.md), [architecture](docs/architecture.md), and [roadmap](docs/roadmap.md). This project uses the MIT license.
