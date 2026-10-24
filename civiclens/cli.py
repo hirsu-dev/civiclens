@@ -51,7 +51,6 @@ def main(argv=None):
             return 0
         bundle = ImportBundle.model_validate_json(args.file.read_text(encoding="utf-8-sig"))
         if args.command == "validate":
-
             known = {meeting.id for meeting in bundle.meetings}
             if any(item.meeting_id not in known for item in bundle.items):
                 raise ValueError(
