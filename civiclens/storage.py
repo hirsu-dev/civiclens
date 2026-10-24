@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from .models import ImportBundle, SavedSearch
 
-
 class Store:
     def __init__(self, path: str | Path):
         self.path = Path(path)
@@ -42,7 +41,7 @@ class Store:
         return (text, item["topic"], item["status"], item.get("district", "Citywide"))
 
     def _migrate_search(self, db):
-        # DDL and backfill share a transaction. No source records are deleted.
+        
         db.execute("BEGIN IMMEDIATE")
         columns = {row[1] for row in db.execute("PRAGMA table_info(agenda)")}
         needs_backfill = "search_text" not in columns
@@ -90,7 +89,7 @@ class Store:
     def import_bundle(self, bundle: ImportBundle):
         added = updated = unchanged = 0
         with self.connection() as db:
-            # Validate all references before writing; a bad bundle leaves no partial data.
+            
             known = {row[0] for row in db.execute("SELECT id FROM meetings")}
             known.update(m.id for m in bundle.meetings)
             if any(item.meeting_id not in known for item in bundle.items):
@@ -161,7 +160,7 @@ class Store:
         terms = q.casefold().split()
         indexed = [term for term in terms if len(term) >= 3 and "\x00" not in term]
         if indexed:
-            # Quote each literal substring: OR, quotes and punctuation never become query syntax.
+            
             clauses.append("a.rowid IN (SELECT rowid FROM agenda_fts WHERE agenda_fts MATCH ?)")
             parameters.append(" AND ".join('"' + term.replace('"', '""') + '"' for term in indexed))
         for term in terms:

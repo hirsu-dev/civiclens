@@ -8,7 +8,6 @@ from pathlib import Path
 from .models import AgendaItem, ImportBundle, Meeting
 from .storage import Store
 
-
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Validate and import source-linked civic records.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -52,8 +51,7 @@ def main(argv=None):
             return 0
         bundle = ImportBundle.model_validate_json(args.file.read_text(encoding="utf-8-sig"))
         if args.command == "validate":
-            # Standalone validation requires references in this file; imports may also
-            # refer to meetings already present in the destination database.
+
             known = {meeting.id for meeting in bundle.meetings}
             if any(item.meeting_id not in known for item in bundle.items):
                 raise ValueError(
@@ -70,7 +68,6 @@ def main(argv=None):
     except (ValueError, OSError, csv.Error) as error:
         print(str(error), file=sys.stderr)
         return 2
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
