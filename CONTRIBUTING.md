@@ -16,4 +16,4 @@ Use a clear commit message describing the resulting behavior. PRs should include
 
 ## Good first contributions
 
-Accessible labels, clearer empty states, fixture-based integration tests, and documented source adapters are welcome. Discuss changes to score semantics or decision-linking rules before implementation because they affect how people interpret evidence.
+Accessible labels, clearer empty states, fixture-based import tests, and documented source adapters are welcome. Discuss changes to decision linking or source provenance before implementation because they affect how records are interpreted.
