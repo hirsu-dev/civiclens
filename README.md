@@ -1,6 +1,6 @@
 # CivicLens
 
-[![Tests](https://github.com/hrushikbarani-hub/civiclens/actions/workflows/test.yml/badge.svg)](https://github.com/hrushikbarani-hub/civiclens/actions/workflows/test.yml)
+[![Tests](https://github.com/hirsu-dev/civiclens/actions/workflows/test.yml/badge.svg)](https://github.com/hirsu-dev/civiclens/actions/workflows/test.yml)
 
 CivicLens helps organize public meeting decisions and connect them to their source records. It keeps a timeline of each decision and shows where summaries came from.
 
